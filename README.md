@@ -738,3 +738,31 @@ See `make area` in [scripts/vivado/](scripts/vivado/).
 | PicoRV32 (small)   |        761 |             48 |             442 |
 | PicoRV32 (regular) |        917 |             48 |             583 |
 | PicoRV32 (large)   |       2019 |             88 |            1085 |
+
+## Simulating with iSim
+
+[iSim](https://tn-si.com) (True North Silicon) runs this design through FuseSoC
+with its `.core` files untouched. FuseSoC selects a simulator through
+**edalize**; iSim's backend is `isimtn` (edalize's own `isim` is the Xilinx ISE
+Simulator) and lives in True North Silicon's edalize fork. Two installs, in this
+order, into the Python environment your `fusesoc` runs from:
+
+    pip install fusesoc
+    pip install --force-reinstall git+https://github.com/Datum-Technology-Corporation/edalize.git
+
+(the second replaces the edalize FuseSoC pulled in with the fork; pip warns
+that fusesoc pins `edalize>=0.4.1`, which the fork's development version
+number does not satisfy -- the warning is all that happens. Keep the two
+installs separate: one `pip install fusesoc git+...` resolves that pin by
+downgrading fusesoc.) `isim`, `isim-vlog`, `isim-vcom` and `isim-elab` must
+be on `PATH`.
+
+Then, from this checkout, with a firmware image (built as described above, or
+any `firmware.hex`):
+
+    fusesoc --cores-root . run --tool=isimtn --target=test ::picorv32 --firmware=firmware/firmware.hex
+
+sets up, analyses, elaborates and runs the testbench; it prints
+`ALL TESTS PASSED` on success. Keep the firmware path short: `testbench.v`
+reads `+firmware=` into a 128-character register and FuseSoC passes the
+parameter as an absolute path.
